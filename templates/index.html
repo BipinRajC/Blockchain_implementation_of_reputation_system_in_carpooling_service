@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CONNECTION TO METAMASK</title>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.2.7-rc.0/web3.min.js"></script>
+    <style>
+    body {
+            background-color: black;
+            font-size: 33px;
+            text-align: center;
+        }
+  
+    .container {
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+
+  .stars {
+    display: flex;
+    justify-content: center;
+  }
+  
+  .stars input {
+    display: none;
+  }
+  
+  .stars label {
+    font-size: 40px;
+    color: white;
+    cursor: pointer;
+  }
+  
+  .stars label:before {
+    content: '\2605'; /* Filled star */
+    color: white;
+  }
+  
+  .stars input:checked ~ label:before {
+    content: '\2605'; /* Filled star */
+    color: white;
+  }
+  
+  .stars input:checked ~ label ~ label:before {
+    content: '\2606'; /* Empty star */
+  }
+  button {
+    background-color: aquamarine;
+    font-size: 33px;
+    font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+  }
+  button:hover {
+    background-color: yellow;
+    }
+  p.textarea{
+    color: white;
+  }
+  </style>
+</head>
+<body>
+    <button onclick="connectMetamask()">CONNECT TO METAMASK</button> <br>
+    <p class="textarea" id="accountArea"></p>
+    <p class="textarea">Please rate your previous ride! We appreciate your honest feedback!</p>
+    <form>
+        <div class="stars">
+          <input type="radio" id="star1" name="rating" value="1" checked>
+          <label for="star1"></label>
+          <input type="radio" id="star2" name="rating" value="2">
+          <label for="star2"></label>
+          <input type="radio" id="star3" name="rating" value="3">
+          <label for="star3"></label>
+          <input type="radio" id="star4" name="rating" value="4">
+          <label for="star4"></label>
+          <input type="radio" id="star5" name="rating" value="5">
+          <label for="star5"></label>
+        </div>
+      </form>
+    <br>
+    <input type="text" id="addressInput" placeholder="Enter driver's wallet address">
+    <br>
+    <button onclick="connectContract()">CONNECT TO CONTRACT</button> <br> <!-- Added this line -->
+    <p class="textarea" id="contractArea"></p>
+    <button onclick="transferTokens()">RATE RIDE</button> <br>
+    <p class="textarea" id="transferArea"></p>
+    <input type="button" id="Continue" value="Continue" onclick="go_next()">
+    <script>
+        // 1- connect metamask
+        let account;
+        const connectMetamask = async () => {
+            if (window.ethereum !== "undefined") {
+                const accounts = await ethereum.request({ method: "eth_requestAccounts" });
+                account = accounts[0];
+                document.getElementById("accountArea").innerHTML = account;
+            }
+        }
+
+        // 2- connect to smart contract
+        const connectContract = async () => {
+            const ABI = [
+	{
+		"inputs": [],
+		"name": "deposit",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address payable",
+				"name": "_to",
+				"type": "address"
+			}
+		],
+		"name": "transfer",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"inputs": [],
+		"name": "withdraw",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getBalance",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "owner",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+]
+            const Address = "0x4f3e3E7E4A0e430d30c0fE3458EedCd245769A0C";
+            window.web3 = await new Web3(window.ethereum);
+            window.contract = await new window.web3.eth.Contract(ABI, Address);
+            document.getElementById("contractArea").innerHTML = "Connected to smart contract";
+        }
+
+        // 3- transfer tokens
+        const transferTokens = async () => {
+            const amountInput = document.querySelector('input[name="rating"]:checked').value;
+            alert(amountInput);
+            const addressInput = document.getElementById("addressInput").value;
+
+            if (amountInput < 1 || amountInput > 5) {
+                document.getElementById("transferArea").innerHTML = "Invalid amount. Please enter a value between 1-5.";
+                return;
+            }
+
+            if (!isValidAddress(addressInput)) {
+                document.getElementById("transferArea").innerHTML = "Invalid wallet address.";
+                return;
+            }
+
+            try {
+                await window.contract.methods.transfer(addressInput).send({ from: account });
+                document.getElementById("transferArea").innerHTML = "Tokens transferred successfully.";
+            } catch (error) {
+                document.getElementById("transferArea").innerHTML = "Error transferring tokens: " + error.message;
+            }
+        }
+
+        // Address validation
+        const isValidAddress = (address) => {
+            const addressRegex = /^0x[a-fA-F0-9]{40}$/;
+            return addressRegex.test(address);
+        }
+        function go_next()
+        {
+          window.location.href = '/maps';
+        }
+    </script>
+</body>
+</html>
